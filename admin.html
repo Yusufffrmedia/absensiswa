@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Admin - Hapus Absensi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .navbar {
+            background-color: #333;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px 0;
+        }
+        .navbar a {
+            display: inline-block;
+            color: white;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+        .navbar a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .attendance-card {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .attendance-card .info {
+            flex: 1;
+            margin-right: 20px;
+        }
+        .attendance-card .info h3 {
+            margin: 0;
+            color: #333;
+        }
+        .attendance-card .info p {
+            margin: 5px 0;
+            color: #555;
+        }
+        .attendance-card .proof {
+            flex-basis: 150px;
+            text-align: center;
+        }
+        .attendance-card img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="login.html">Login</a>
+    </div>
+
+    <div class="container">
+        <h1>Daftar Absensi</h1>
+        <div id="attendanceList">
+            <!-- Absensi akan ditampilkan di sini sebagai kartu -->
+        </div>
+    </div>
+
+    <script>
+        // Menyimpan absensi dalam localStorage (untuk keperluan demo)
+        let attendanceData = JSON.parse(localStorage.getItem('attendance')) || [];
+
+        // Menampilkan absensi yang sudah tercatat dalam format kartu
+        function renderAttendanceCards() {
+            const attendanceList = document.getElementById('attendanceList');
+            attendanceList.innerHTML = '';  // Clear existing list
+
+            attendanceData.forEach((entry, index) => {
+                const card = document.createElement('div');
+                card.classList.add('attendance-card');
+
+                card.innerHTML = `
+                    <div class="info">
+                        <h3>${entry.name}</h3>
+                        <p><strong>Tanggal:</strong> ${entry.date}</p>
+                        <p><strong>Pelajaran:</strong> ${entry.subject}</p>
+                        <p><strong>Kelas:</strong> ${entry.class}</p>
+                        <p><strong>Bukti:</strong> ${entry.proof === 'No photo' ? 'Tidak ada foto' : ''}</p>
+                    </div>
+                    <div class="proof">
+                        ${entry.proof !== 'No photo' ? `<img src="${entry.proof}" alt="Bukti Foto">` : ''}
+                    </div>
+                    <div>
+                        <button onclick="hapusAbsensi(${index})">Hapus</button>
+                    </div>
+                `;
+
+                attendanceList.appendChild(card);
+            });
+        }
+
+        // Fungsi untuk menghapus absensi
+        function hapusAbsensi(index) {
+            if (confirm("Apakah Anda yakin ingin menghapus absensi ini?")) {
+                attendanceData.splice(index, 1); // Hapus absensi dari array
+                localStorage.setItem('attendance', JSON.stringify(attendanceData)); // Simpan perubahan ke localStorage
+                renderAttendanceCards(); // Update tampilan absensi
+            }
+        }
+
+        // Memanggil fungsi untuk menampilkan data absensi saat halaman dimuat
+        renderAttendanceCards();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Absensi Siswa</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Navbar Style */
+        .navbar {
+            background-color: #333;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px 0;
+        }
+
+        .navbar a {
+            display: inline-block;
+            color: white;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input, button {
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Kartu Absensi */
+        .attendance-card {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .attendance-card .info {
+            flex: 1;
+            margin-right: 20px;
+        }
+
+        .attendance-card .info h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        .attendance-card .info p {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        .attendance-card .proof {
+            flex-basis: 150px;
+            text-align: center;
+        }
+
+        .attendance-card img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+
+        #canvas {
+            display: none;
+        }
+
+        #video {
+            width: 100%;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+        
+        footer {
+    background-color: #333; /* Warna latar belakang footer */
+    color: white; /* Warna teks */
+    text-align: center; /* Memusatkan teks */
+    padding: 20px; /* Memberikan ruang di dalam footer */
+    position: fixed; /* Memastikan footer tetap di bawah halaman */
+    width: 100%; /* Membuat footer selebar halaman */
+    bottom: 0; /* Menempel di bagian bawah */
+}
+
+footer p {
+    margin: 5px 0; /* Memberikan jarak antar baris */
+}
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <a href="#">Home</a>
+        <a href="index.html">Absensi</a>
+        <a href="login.html">Admin</a>
+    </div>
+
+    <div class="container">
+        <h1>Absensi Siswa</h1>
+        
+        <!-- Form untuk Input Nama, Pelajaran, Kelas dan Kamera -->
+        <form id="attendanceForm">
+            <input type="text" id="studentName" placeholder="Nama Siswa" required>
+            <input type="text" id="subject" placeholder="Pelajaran" required>
+            <input type="text" id="class" placeholder="Kelas" required>
+
+            <!-- Tombol untuk mengambil foto (opsional) -->
+            <button type="button" id="captureButton">Jepret</button>
+            
+            <!-- Video dan canvas untuk menangkap gambar -->
+            <video id="video" autoplay></video>
+            <canvas id="canvas"></canvas>
+            <input type="hidden" id="imageData">
+            <button type="submit">Absen</button>
+        </form>
+
+        <!-- Daftar Absensi -->
+        <div id="attendanceList">
+            <!-- Absensi akan ditampilkan di sini sebagai kartu -->
+        </div>
+    </div>
+
+    <script>
+        let attendanceData = JSON.parse(localStorage.getItem('attendance')) || [];
+
+        // Menampilkan absensi yang sudah tercatat dalam format kartu
+        function renderAttendanceCards() {
+            const attendanceList = document.getElementById('attendanceList');
+            attendanceList.innerHTML = '';  // Clear existing list
+
+            attendanceData.forEach((entry) => {
+                const card = document.createElement('div');
+                card.classList.add('attendance-card');
+
+                card.innerHTML = `
+                    <div class="info">
+                        <h3>${entry.name}</h3>
+                        <p><strong>Tanggal:</strong> ${entry.date}</p>
+                        <p><strong>Pelajaran:</strong> ${entry.subject}</p>
+                        <p><strong>Kelas:</strong> ${entry.class}</p>
+                        <p><strong>Bukti:</strong> ${entry.proof === 'No photo' ? 'Tidak ada foto' : ''}</p>
+                    </div>
+                    <div class="proof">
+                        ${entry.proof !== 'No photo' ? `<img src="${entry.proof}" alt="Bukti Foto">` : ''}
+                    </div>
+                `;
+
+                attendanceList.appendChild(card);
+            });
+        }
+
+        // Menangani pengiriman form absensi
+        document.getElementById('attendanceForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const imageData = document.getElementById('imageData').value;
+
+            if (!imageData) {
+                alert("Anda belum mengirimkan foto, harap diwajibkan untuk mengambil foto terlebih dahulu!");
+                return;  // Menghentikan form untuk tidak terkirim
+            }
+
+            const name = document.getElementById('studentName').value;
+            const subject = document.getElementById('subject').value;
+            const className = document.getElementById('class').value;
+
+            if (name && subject && className) {
+                const attendanceEntry = {
+                    name: name,
+                    subject: subject,
+                    class: className,
+                    date: new Date().toLocaleString(),
+                    proof: imageData
+                };
+
+                attendanceData.push(attendanceEntry);
+                localStorage.setItem('attendance', JSON.stringify(attendanceData));
+
+                document.getElementById('attendanceForm').reset();
+                renderAttendanceCards();
+            } else {
+                alert("Semua kolom harus diisi!");
+            }
+        });
+
+        // Menangkap foto dari kamera
+        document.getElementById('captureButton').addEventListener('click', function() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Ambil gambar dari video dan gambarkan ke canvas
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Simpan data gambar dalam format base64
+            const imageData = canvas.toDataURL('image/png');
+            document.getElementById('imageData').value = imageData;
+
+            // Menghentikan video setelah foto diambil
+            const stream = video.srcObject;
+            const tracks = stream.getTracks();
+            tracks.forEach(track => track.stop());
+            video.srcObject = null;
+        });
+
+        // Mengakses kamera dan memulai stream video
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    const video = document.getElementById('video');
+                    video.srcObject = stream;
+                })
+                .catch(function(err) {
+                    console.error("Kesalahan mengakses kamera: " + err);
+                });
+        }
+
+        // Menjalankan kamera ketika halaman dimuat
+        window.addEventListener('load', startCamera);
+
+        // Menampilkan data absensi saat halaman dimuat
+        renderAttendanceCards();
+    </script>
+      
+      <footer
+    <p>&copy; moch. yusuf. Semua hak dilindungi.</p>
+    <p>SMK AL-HUDA SADANANYA</p>
+      </footer>
+</body>
+</html>
